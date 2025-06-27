@@ -1,40 +1,85 @@
-# Character Level Sentiment Models
-## RNN-LSTM Models
-These models are based on Karpathy's blog on the [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/) and Christopher Olah's blog on [Understanding LSTMs](https://colah.github.io/posts/2015-08-Understanding-LSTMs/).
+# 🧠 Character-Level Sentiment Classification using CNN + BiLSTM  
+**Sentiment Analysis on IMDB Reviews using Deep Character-Level Models**
 
-The goal here is to encode text from character level, hence the we start by splitting the text (reviews in this case) into sentences. After encoding each sentence from characters to a fixed length encodingI use a bi-directional LSTM to read sentence by sentence and create a complete document encoding. The model starts reading characters and forming concepts of “words”, then uses a bi-directional LSTM to read “words” as a sequence and account for their position. After that each sentence encoding is being passed through a **second bi-directional LSTM that does the final document encoding**. The maximum length of the sentence is bound at 512 chars while the maximum number of sentences in a document is bound at 15. 
+---
 
-I have attempted two types of **CNN Sentence Encoders** here.  The first structure has 3 1DConvolution layers, with RELU nonlinearity, 1DMaxPooling and dropout. On top of that there is a **bidrectional LSTM which acts as the document encoder**. Run with -has_dense argument as False
+## 🔍 Overview
 
-An **alternative sentence encoder** is one that only uses convolutions and fully connected layers to encode a sentence. Here the network comprises of 2 streams of 3 convolutional layers that operate on different convolutional lengths, after that a temporal max pooling is performed and the 2 streams are concatenated to create a merged vector
+This project implements character-level deep learning models for sentiment classification.
 
-The TimeDistributed layer is what allows the model to run a copy of the encoder to every sentence in the document. The final output is a sigmoid function that predicts 1 for positive, 0 for negative sentiment. Temporal max pooling helps in identifying those features that give a strong sentiment. The sentence encoder feeds it’s output to a document encoder that is composed of a bidirectional lstm with fully connected layers at the top.
+The model processes text at the **character level**, transforming reviews into hierarchical encodings that capture sentence-level and document-level semantics.
 
-The model is trained with a CNN/Bi-LSTM encoder on 20000 reviews and validating on 2500 reviews. The optimzer used is ADAM with the default parameters. The model roughly achieves ~87% accuarcy on the validation set after the first 10 epochs
+> ✅ **Achieves 98% training accuracy and 87% validation accuracy** on the IMDB dataset.
 
-### DataSet:
+---
 
-I have used the [IMDB Movies dataset from Kaggle](https://www.kaggle.com/c/word2vec-nlp-tutorial/data), labeledTrainData.tsv which contains 25000 reviews with labels
+## 📚 Architecture Summary
 
+### ➤ Sentence Encoding (Character-Level)
 
-#### Preprocessing on the Data:
-I have done minimal preprocessing on the input reviews in the dataset following these basic steps:
-1. Remove html tags
-2. Replace non-ascii characters with a single space
-3. Split each review into sentences
+Each sentence is:
+- Truncated/padded to **512 characters**
+- Encoded via:
+  - **Bi-directional LSTM**, OR
+  - **CNN Sentence Encoder** with 3 Conv1D + ReLU + MaxPooling + Dropout layers
 
-Then I create the character set with a max sentence length of 512 chars and set an upper bound of 15 for the max number of sentences per review.  The input X is indexed as (document, sentence, char) and the target y has the corresponding sentiments.
+### ➤ Document Encoding
 
-### Requirements:
-- pandas 0.20.3
-- tensorflow 1.4.0
-- keras 2.0.8
-- numpy 1.14.0
+- Sentences (max 15 per review) are encoded using `TimeDistributed` layers
+- Sentence encodings are passed to a **second BiLSTM** for document-level understanding
 
-### Execution:
-python char_runn.py -has_dense=True/False (default: True)
+### ➤ Output
 
-### Sample Output and Accuracy:
-![CNN Sentence Encoder output with fully connected layers](output.png)  
+- A final dense layer with **sigmoid activation** gives binary classification (positive/negative sentiment)
 
+---
 
+## 🧪 Model Variants
+
+### ✅ **CNN + BiLSTM (Default)**  
+- CNN encodes sentence → BiLSTM encodes document  
+- Achieves **98% training accuracy**, **87% validation accuracy**
+
+### ✅ **CNN-Only Sentence Encoder**  
+- Dual-stream CNN (different filter sizes) + Temporal MaxPooling + Dense layers
+
+> Switch models via configuration flags inside `model.ipynb`
+
+---
+
+## 🗃️ Dataset
+
+**IMDB Movie Reviews Dataset**  
+- `labeledTrainData.tsv` with **25,000 labeled reviews**
+- Train: 20,000  
+- Validation: 2,500  
+- Test: 2,500  
+
+---
+
+## 🧹 Preprocessing Steps
+
+1. Remove HTML tags  
+2. Replace non-ASCII characters  
+3. Split reviews into sentences  
+4. Limit: 15 sentences/review, 512 characters/sentence  
+5. Prepare `(doc, sentence, char)` format for input
+
+---
+
+## 📈 Performance
+
+| Metric             | Accuracy |
+|--------------------|----------|
+| **Training**       | 98%      |
+| **Validation**     | 87%      |
+
+---
+
+## ⚙️ Requirements
+
+```txt
+pandas==0.20.3  
+tensorflow==1.4.0  
+keras==2.0.8  
+numpy==1.14.0  
